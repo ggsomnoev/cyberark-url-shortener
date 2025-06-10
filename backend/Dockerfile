@@ -1,6 +1,25 @@
-FROM python:3.9
+FROM golang:1.24 AS builder
+
+ENV CGO_ENABLED=0 \
+    GOOS=linux
+
+WORKDIR /build
+
+COPY go.mod go.sum ./
+COPY vendor ./vendor
+ENV GOFLAGS=-mod=vendor
+
+COPY internal ./internal
+COPY cmd/api ./cmd/api
+
+COPY migrations ./migrations
+
+RUN go build -o api ./cmd/api
+
+FROM alpine:latest
+
 WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000"]
+COPY --from=builder /build/api .
+COPY --from=builder /build/migrations ./migrations
+
+CMD ["./api"]
