@@ -1,18 +1,27 @@
 services:
+  # backend:
+  #   command: uvicorn main:app --reload --host 0.0.0.0 --port 5000
+  #   build: ./backend
+  #   working_dir: /app/backend
+  #   ports:
+  #     - "5000:5000"
+  #   volumes:
+  #     - "${PWD}/backend:/app/backend"
+  # frontend:
+  #   build: ./frontend
+  #   working_dir: /app/frontend
+  #   volumes:
+  #     - "${PWD}/frontend:/app/frontend"
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
   backend:
-    command: uvicorn main:app --reload --host 0.0.0.0 --port 5000
-    build: ./backend
-    working_dir: /app/backend
+    container_name: urlshortener
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    volumes:
-      - "${PWD}/backend:/app/backend"
-  frontend:
-    build: ./frontend
-    working_dir: /app/frontend
-    volumes:
-      - "${PWD}/frontend:/app/frontend"
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
+    env_file:
+      - /backend/.env
