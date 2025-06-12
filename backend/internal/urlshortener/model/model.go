@@ -15,7 +15,6 @@ type URL struct {
 
 type ShortenRequest struct {
 	URL       string `json:"url"`
-	ShortCode string `json:"short_code,omitempty"`
 }
 
 type ShortenResponse struct {

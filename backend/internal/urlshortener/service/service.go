@@ -36,7 +36,7 @@ func NewService(store Store, cache CacheClient) *Service {
 func (s *Service) ResolveURL(ctx context.Context, shortCode string) (string, error) {
 	originalURL, err := s.cache.Get(ctx, shortCode)
 	if err != nil && err != redis.Nil {
-		return "", fmt.Errorf("failed to get original url from the cache: %w", err)
+		return "", fmt.Errorf("failed to get url from the cache: %w", err)
 	}
 
 	if originalURL != "" {
@@ -45,7 +45,7 @@ func (s *Service) ResolveURL(ctx context.Context, shortCode string) (string, err
 
 	url, err := s.store.FindByShortCode(ctx, shortCode)
 	if err != nil {
-		return "", fmt.Errorf("failed to get original url: %w", err)
+		return "", fmt.Errorf("failed to get url: %w", err)
 	}
 
 	if err = s.cache.Set(ctx, url.ShortCode, url.Original); err != nil {
