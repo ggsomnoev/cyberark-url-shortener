@@ -11,9 +11,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func Process(ctx context.Context, pool *pgxpool.Pool, srv *echo.Echo) {
+func Process(ctx context.Context, pool *pgxpool.Pool, srv *echo.Echo, cacheClient service.CacheClient) {
 	urlShortenerStore := store.NewStore(pool)
-	urlShortenerSvc := service.NewService(urlShortenerStore)
+	urlShortenerSvc := service.NewService(urlShortenerStore, cacheClient)
 
 	validatorSvc := validator.NewValidator()
 

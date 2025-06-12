@@ -23,11 +23,14 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    depends_on:      
+    depends_on:    
+      redis:
+        condition: service_healthy      
       urlshortenerdb:
         condition: service_healthy  
     env_file:
       - /backend/.env
+  
   urlshortenerdb:
     image: postgres:17.5
     container_name: urlshortenerdb
@@ -41,6 +44,17 @@ services:
       - pgdata:/var/lib/postgres/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d urlshortenerdb"]
+      interval: 1s
+      timeout: 1s
+      retries: 30
+
+  redis:
+    image: redis:8.0
+    container_name: urlshortenerredis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 1s
       timeout: 1s
       retries: 30

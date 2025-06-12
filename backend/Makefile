@@ -16,5 +16,5 @@ test:
 
 .PHONY: run-docker
 run-docker:
-	docker compose down -v \
-	docker compose up --build --remove-orphans
+	docker compose down -v --remove-orphans 
+	docker compose up --build 
