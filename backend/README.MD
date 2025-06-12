@@ -58,6 +58,6 @@ curl -X GET http://127.0.0.1:5000/abcd1234
 ```
 
 ## Future work
-- Stored keys can now have an expiration time. We can have a separate process that cleans up shortened URL which have expried.
+- Stored keys can now have an expiration time. We can have a separate process that clears up shortened URLs which have expired.
 - In memory cache for even faster access.
 - Custom short codes.
