@@ -20,25 +20,29 @@ import (
 )
 
 var (
-	ErrShortenURLFailed = errors.New("failed to shorten URL")
-	ErrUrlResolveFailed = errors.New("failed to resolve URL")
+	ErrShortenRequestValidationFailed = errors.New("failed to validate request")
+	ErrShortenURLFailed               = errors.New("failed to shorten URL")
+	ErrShortCodeValidationFailed      = errors.New("failed to validate short code")
+	ErrUrlResolveFailed               = errors.New("failed to resolve URL")
 )
 
 var _ = Describe("Handler", func() {
 	var (
-		ctx      context.Context
-		e        *echo.Echo
-		recorder *httptest.ResponseRecorder
-		service  *handlerfakes.FakeService
+		ctx       context.Context
+		e         *echo.Echo
+		recorder  *httptest.ResponseRecorder
+		service   *handlerfakes.FakeService
+		validator *handlerfakes.FakeValidator
 	)
 
 	BeforeEach(func() {
 		e = echo.New()
 		ctx = context.Background()
 		service = &handlerfakes.FakeService{}
+		validator = &handlerfakes.FakeValidator{}
 		recorder = httptest.NewRecorder()
 
-		handler.RegisterRoutes(ctx, e, service)
+		handler.RegisterRoutes(ctx, e, service, validator)
 	})
 
 	Describe("/api/shorten", func() {
@@ -58,6 +62,7 @@ var _ = Describe("Handler", func() {
 			req = httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader(body))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
+			validator.ValidateShortenRequestReturns(nil)
 			service.ShortenURLReturns(shortCode, nil)
 		})
 
@@ -68,6 +73,7 @@ var _ = Describe("Handler", func() {
 		It("succeeds", func() {
 			Expect(recorder.Code).To(Equal(http.StatusOK))
 
+			Expect(validator.ValidateShortenRequestCallCount()).To(Equal(1))
 			Expect(service.ShortenURLCallCount()).To(Equal(1))
 			actualCtx, actualURL := service.ShortenURLArgsForCall(0)
 			Expect(actualCtx).To(Equal(ctx))
@@ -82,6 +88,17 @@ var _ = Describe("Handler", func() {
 
 			It("returns 400", func() {
 				Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+			})
+		})
+
+		Context("url validation fails", func() {
+			BeforeEach(func() {
+				validator.ValidateShortenRequestReturns(ErrShortenRequestValidationFailed)
+			})
+
+			It("returns 400", func() {
+				Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+				Expect(recorder.Body.String()).To(ContainSubstring(ErrShortenRequestValidationFailed.Error()))
 			})
 		})
 
@@ -111,6 +128,7 @@ var _ = Describe("Handler", func() {
 			req = httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", shortCode), nil)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
+			validator.ValidateShortCodeReturns(nil)
 			service.ResolveURLReturns(url, nil)
 		})
 
@@ -121,10 +139,22 @@ var _ = Describe("Handler", func() {
 		It("succeeds", func() {
 			Expect(recorder.Code).To(Equal(http.StatusFound))
 
+			Expect(validator.ValidateShortCodeCallCount()).To(Equal(1))
 			Expect(service.ResolveURLCallCount()).To(Equal(1))
 			actualCtx, actualShortUrl := service.ResolveURLArgsForCall(0)
 			Expect(actualCtx).To(Equal(ctx))
 			Expect(actualShortUrl).To(Equal(shortCode))
+		})
+
+		Context("shortCode validation fails", func() {
+			BeforeEach(func() {
+				validator.ValidateShortCodeReturns(ErrShortCodeValidationFailed)
+			})
+
+			It("returns 400", func() {
+				Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+				Expect(recorder.Body.String()).To(ContainSubstring(ErrShortCodeValidationFailed.Error()))
+			})
 		})
 
 		Context("resolve url fails", func() {

@@ -6,13 +6,16 @@ import (
 	"github.com/ggsomnoev/cyberark-url-shortener/internal/urlshortener/handler"
 	"github.com/ggsomnoev/cyberark-url-shortener/internal/urlshortener/service"
 	"github.com/ggsomnoev/cyberark-url-shortener/internal/urlshortener/store"
+	"github.com/ggsomnoev/cyberark-url-shortener/internal/urlshortener/validator"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 )
 
 func Process(ctx context.Context, pool *pgxpool.Pool, srv *echo.Echo) {
 	urlShortenerStore := store.NewStore(pool)
-	urlShortenerService := service.NewService(urlShortenerStore)
+	urlShortenerSvc := service.NewService(urlShortenerStore)
 
-	handler.RegisterRoutes(ctx, srv, urlShortenerService)
+	validatorSvc := validator.NewValidator()
+
+	handler.RegisterRoutes(ctx, srv, urlShortenerSvc, validatorSvc)
 }

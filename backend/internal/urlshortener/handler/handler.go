@@ -16,21 +16,34 @@ type Service interface {
 	ShortenURL(context.Context, string) (string, error)
 }
 
-func RegisterRoutes(ctx context.Context, srv *echo.Echo, urlShortener Service) {
+//counterfeiter:generate . Validator
+type Validator interface {
+	ValidateShortenRequest(model.ShortenRequest) error
+	ValidateShortCode(string) error
+}
+
+func RegisterRoutes(ctx context.Context, srv *echo.Echo, urlShortener Service, validator Validator) {
 	if srv != nil {
-		srv.POST("/api/shorten", handleURLShorten(ctx, urlShortener))
-		srv.GET("/:code", handleRedirects(ctx, urlShortener))
+		srv.POST("/api/shorten", handleURLShorten(ctx, urlShortener, validator))
+		srv.GET("/:code", handleRedirects(ctx, urlShortener, validator))
 	} else {
 		logger.GetLogger().Warn("Running routes without a webapi server. Did not register routes")
 	}
 }
 
-func handleURLShorten(ctx context.Context, urlShortener Service) echo.HandlerFunc {
+func handleURLShorten(ctx context.Context, urlShortener Service, validator Validator) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var urlEntity model.ShortenRequest
 		if err := c.Bind(&urlEntity); err != nil {
 			c.JSON(http.StatusBadRequest, echo.Map{
 				"message": "failed to resolve URL parameter",
+				"error":   err.Error(),
+			})
+		}
+
+		if err := validator.ValidateShortenRequest(urlEntity); err != nil {
+			c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "invalid request data",
 				"error":   err.Error(),
 			})
 		}
@@ -49,9 +62,16 @@ func handleURLShorten(ctx context.Context, urlShortener Service) echo.HandlerFun
 	}
 }
 
-func handleRedirects(ctx context.Context, urlShortener Service) echo.HandlerFunc {
+func handleRedirects(ctx context.Context, urlShortener Service, validator Validator) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		shortCode := c.Param("code")
+
+		if err := validator.ValidateShortCode(shortCode); err != nil {
+			c.JSON(http.StatusBadRequest, echo.Map{
+				"message": "invalid request data",
+				"error":   err.Error(),
+			})
+		}
 
 		originalURL, err := urlShortener.ResolveURL(ctx, shortCode)
 		if err != nil {
