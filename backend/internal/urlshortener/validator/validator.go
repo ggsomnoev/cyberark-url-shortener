@@ -26,6 +26,11 @@ func (v *Validator) ValidateShortenRequest(req model.ShortenRequest) error {
 		return err
 	}
 
+	// Optional param.
+	if req.ShortCode == "" {
+		return nil
+	}
+
 	if err := v.ValidateShortCode(req.ShortCode); err != nil {
 		return err
 	}
