@@ -6,6 +6,15 @@ tidy:
 vendor:
 	go mod vendor
 
+.PHONY: generate
+generate:
+	go generate ./...
+
+.PHONY: test
+test:
+	ginkgo ./...	
+
 .PHONY: run-docker
 run-docker:
+	docker compose down -v \
 	docker compose up --build --remove-orphans

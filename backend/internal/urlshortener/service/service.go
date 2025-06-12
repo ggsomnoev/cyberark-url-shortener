@@ -35,7 +35,7 @@ func (s *Service) ShortenURL(ctx context.Context, orginalURL string) (string, er
 	shortCode := generateShortCode()
 
 	urlEntity := model.URL{
-		ID:        uuid.New().String(),
+		ID:        uuid.New(),
 		Original:  orginalURL,
 		ShortCode: shortCode,
 		CreatedAt: time.Now(),

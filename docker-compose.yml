@@ -2,20 +2,20 @@ services:
   # backend:
   #   command: uvicorn main:app --reload --host 0.0.0.0 --port 5000
   #   build: ./backend
-  #   working_dir: /app/backend
+  #   working_dir: /app/backend_old
   #   ports:
   #     - "5000:5000"
   #   volumes:
-  #     - "${PWD}/backend:/app/backend"
-  # frontend:
-  #   build: ./frontend
-  #   working_dir: /app/frontend
-  #   volumes:
-  #     - "${PWD}/frontend:/app/frontend"
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - backend
+  #     - "${PWD}/backend_old:/app/backend"
+  frontend:
+    build: ./frontend
+    working_dir: /app/frontend
+    volumes:
+      - "${PWD}/frontend:/app/frontend"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
   backend:
     container_name: urlshortener
     build:
@@ -23,5 +23,37 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    depends_on:      
+      urlshortenerdb:
+        condition: service_healthy  
     env_file:
       - /backend/.env
+  urlshortenerdb:
+    image: postgres:17.5
+    container_name: urlshortenerdb
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: urlshortenerdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgres/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d urlshortenerdb"]
+      interval: 1s
+      timeout: 1s
+      retries: 30
+
+  migratedb:
+    image: migrate/migrate:v4.17.1
+    container_name: migratedb
+    volumes:
+      - ./backend/migrations:/migrations
+    entrypoint: [ "migrate", "-path", "/migrations", "-database", "pgx5://user:pass@urlshortenerdb:5432/urlshortenerdb", "up" ]
+    depends_on:
+      urlshortenerdb:
+        condition: service_healthy
+
+volumes:
+  pgdata:

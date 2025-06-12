@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/ggsomnoev/cyberark-url-shortener/internal/urlshortener/model"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const URLSTable = "urls"
@@ -32,7 +32,7 @@ func (s *Store) FindByShortCode(ctx context.Context, shortCode string) (model.UR
 	row := s.pool.QueryRow(ctx, query, shortCode)
 
 	var urlEntity model.URL
-	if err := row.Scan(&urlEntity.ID, &urlEntity, urlEntity.Original, &urlEntity.CreatedAt); err != nil {
+	if err := row.Scan(&urlEntity.ID, &urlEntity.Original, &urlEntity.CreatedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.URL{}, errors.New("no such record found")
 		}

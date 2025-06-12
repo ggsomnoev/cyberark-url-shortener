@@ -1,9 +1,13 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type URL struct {
-	ID        string
+	ID        uuid.UUID
 	Original  string
 	ShortCode string
 	CreatedAt time.Time
