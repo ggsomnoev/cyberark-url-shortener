@@ -6,6 +6,7 @@ import (
 
 	"github.com/ggsomnoev/cyberark-url-shortener/internal/urlshortener/model"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 //counterfeiter:generate . Store
@@ -34,7 +35,7 @@ func NewService(store Store, cache CacheClient) *Service {
 
 func (s *Service) ResolveURL(ctx context.Context, shortCode string) (string, error) {
 	originalURL, err := s.cache.Get(ctx, shortCode)
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		return "", fmt.Errorf("failed to get original url from the cache: %w", err)
 	}
 
