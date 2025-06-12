@@ -9,10 +9,10 @@ import (
 )
 
 var _ = Describe("Validator", func() {
-	var v validator.Validator
+	var v *validator.Validator
 
 	BeforeEach(func() {
-		v = *validator.NewValidator()
+		v = validator.NewValidator()
 	})
 
 	Describe("ValidateShortenRequest", func() {

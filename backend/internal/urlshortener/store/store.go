@@ -12,6 +12,8 @@ import (
 
 const URLSTable = "urls"
 
+var ErrRecordNotFound = errors.New("no such record found")
+
 type Store struct {
 	pool *pgxpool.Pool
 }
@@ -34,7 +36,7 @@ func (s *Store) FindByShortCode(ctx context.Context, shortCode string) (model.UR
 	var urlEntity model.URL
 	if err := row.Scan(&urlEntity.ID, &urlEntity.Original, &urlEntity.CreatedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return model.URL{}, errors.New("no such record found")
+			return model.URL{}, ErrRecordNotFound
 		}
 		return model.URL{}, fmt.Errorf("failed to fetch data for %s: %w", shortCode, err)
 	}

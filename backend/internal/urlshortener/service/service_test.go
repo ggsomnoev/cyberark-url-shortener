@@ -142,7 +142,7 @@ var _ = Describe("Service", func() {
 				})
 			})
 		})
-		
+
 		Describe("ShortenURL", func() {
 			var (
 				url string
